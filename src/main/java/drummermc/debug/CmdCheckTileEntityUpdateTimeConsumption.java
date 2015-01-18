@@ -8,10 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.SerializationUtils;
+
+import akka.serialization.Serialization;
 import drummermc.debug.jgui._components.STable;
 import drummermc.debug.jgui.debug.FrameDebug;
+import drummermc.debug.network.PacketCounterTile;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.world.World;
@@ -37,6 +42,10 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 	@Override
 	public void processCommand(final ICommandSender iCommandSender, String[] args) 
 	{
+		if(!(iCommandSender instanceof EntityPlayer))
+			return;
+		EntityPlayer p = (EntityPlayer) iCommandSender;
+		
 		final int cntRuns; 
 		try
 		{
@@ -111,15 +120,8 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 			tData[i][3] = oResult[3];					
 			i++;
 		}
-		
-		new FrameDebug(new STable(tData, new Object[]{"Dimension", "Name", "Coords (X,Z,Y)", "TimeConsumpion (Nanoseconds)"})
-		{
-			@Override
-            public boolean isCellEditable(int row, int col)
-            {
-                return false;
-            }
-		});
+		SerializationUtils.serialize(tData);
+		new PacketCounterTile(p, SerializationUtils.serialize(tData), SerializationUtils.serialize(new Object[]{"Dimension", "Name", "Coords (X,Z,Y)", "TimeConsumpion (Nanoseconds)"})).sendPacketToPlayer(p);;
 
 	}
 	

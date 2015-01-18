@@ -1,5 +1,7 @@
 package drummermc.debug.network;
 
+import org.apache.commons.lang3.SerializationUtils;
+
 import cpw.mods.fml.common.network.ByteBufUtils;
 import drummermc.debug.jgui._components.STable;
 import drummermc.debug.jgui.debug.FrameDebug;
@@ -13,10 +15,20 @@ public class PacketCounterTile extends AbstractPacket{
 	
 	private InfoList[] list;
 	
+	private byte[] b1;
+	private byte[] b2;
+	
 	public PacketCounterTile(EntityPlayer _player, InfoList[] _list){
 		super(_player);
 		mode = 0;
 		list = _list;
+	}
+	
+	public PacketCounterTile(EntityPlayer _player, byte[] b1, byte[] b2){
+		super(_player);
+		mode = 1;
+		this.b1 = b1;
+		this.b2 = b2;
 	}
 
 	@Override
@@ -29,6 +41,12 @@ public class PacketCounterTile extends AbstractPacket{
 			}
 			data.setInteger("i", list.length);
 			ByteBufUtils.writeTag(out, data);
+			break;
+		case 1:
+			NBTTagCompound tag = new NBTTagCompound();
+			tag.setByteArray("b1", b1);
+			tag.setByteArray("b2", b2);
+			ByteBufUtils.writeTag(out, tag);
 			break;
 		}
 		
@@ -47,6 +65,11 @@ public class PacketCounterTile extends AbstractPacket{
 				}
 			}
 			break;
+		case 1:
+			NBTTagCompound tag = ByteBufUtils.readTag(in);
+			b1 = tag.getByteArray("b1");
+			b2 = tag.getByteArray("b2");
+			break;
 		}
 		
 	}
@@ -63,6 +86,16 @@ public class PacketCounterTile extends AbstractPacket{
 			}
 			Object[] o = {"Tile Entity Name", "Fields", "World ID"};
 			FrameDebug frame = new FrameDebug(new STable(obj, o));
+			break;
+		case 1:
+			new FrameDebug(new STable((Object[][]) SerializationUtils.deserialize(b1), (Object[])SerializationUtils.deserialize(b2))
+			{
+				@Override
+	            public boolean isCellEditable(int row, int col)
+	            {
+	                return false;
+	            }
+			});
 			break;
 		}
 		
