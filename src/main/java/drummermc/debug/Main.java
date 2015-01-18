@@ -4,6 +4,7 @@ import net.minecraft.init.Blocks;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStartingEvent;
 
 @Mod(modid = Main.MODID, version = Main.VERSION)
 public class Main
@@ -14,7 +15,13 @@ public class Main
     @EventHandler
     public void init(FMLInitializationEvent event)
     {
-		// some example code
-        System.out.println("DIRT BLOCK >> "+Blocks.dirt.getUnlocalizedName());
+		
+    }
+    
+    @EventHandler
+    public void serverLoad(FMLServerStartingEvent event)
+    {
+      event.registerServerCommand(new CmdCheckTileEntityUpdateTimeConsumption());
+      event.registerServerCommand(new CmdCheckVariableTileEntity());
     }
 }
