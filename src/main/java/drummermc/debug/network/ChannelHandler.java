@@ -12,10 +12,12 @@ import net.minecraftforge.common.DimensionManager;
 
 import java.util.EnumMap;
 
+import drummermc.debug.Main;
+
 public class ChannelHandler {
 
     private static EnumMap<Side, FMLEmbeddedChannel> channels;
-    public static SimpleNetworkWrapper wrapper = NetworkRegistry.INSTANCE.newSimpleChannel("extracells");
+    public static SimpleNetworkWrapper wrapper = NetworkRegistry.INSTANCE.newSimpleChannel(Main.MODID);
 
     public static void registerMessages() {
         
