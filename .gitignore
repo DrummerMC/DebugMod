@@ -1,5 +1,12 @@
-.gradle
-build/
-
-# Ignore Gradle GUI config
-gradle-app.setting
+/*
+!/.gitignore
+!/src
+!/gradle
+!/gradlew
+!/gradlew.bat
+!/README.md
+!/License.txt
+!/build.gradle
+!/build.bat
+!/build.sh
+!/build.properties
