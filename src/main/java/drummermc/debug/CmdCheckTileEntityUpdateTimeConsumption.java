@@ -3,6 +3,7 @@ package drummermc.debug;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -13,14 +14,14 @@ import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.world.World;
+import net.minecraftforge.common.DimensionManager;
 
 public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 {
 	private static final String CMD = "tetimecs";
 	private static final String S_ARGS = "<int:countRuns>";
-	
-	private ArrayList<TileEntity> tileEntitys;
-	
+
 	@Override
 	public String getCommandName()
 	{
@@ -34,9 +35,9 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 	}
 
 	@Override
-	public void processCommand(ICommandSender iCommandSender, String[] args)
+	public void processCommand(final ICommandSender iCommandSender, String[] args) 
 	{
-		int cntRuns = 0;
+		final int cntRuns; 
 		try
 		{
 			if (args == null || args[0] == null || (cntRuns = Integer.parseInt(args[0])) == 0)
@@ -51,91 +52,67 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 			return;
 		}
 		
-		this.tileEntitys = (ArrayList<TileEntity>) iCommandSender.getEntityWorld().loadedTileEntityList;
-		
-		iCommandSender.addChatMessage(new ChatComponentTranslation("Loaded TileEnties: " + iCommandSender.getEntityWorld().loadedTileEntityList.size()));
-		iCommandSender.addChatMessage(new ChatComponentTranslation("Disable all TileEnties..."));
-		
-		for(Object objTileEntityOriginal : iCommandSender.getEntityWorld().loadedTileEntityList)
-		{
-			TileEntity tileEntityOriginal = (TileEntity) objTileEntityOriginal;
-			tileEntityOriginal.invalidate();
-		}
-		iCommandSender.getEntityWorld().loadedTileEntityList = null;
-		
-		for(int i = 5; i > 0; i--)
-		{
-			iCommandSender.addChatMessage(new ChatComponentTranslation("Wait... " + i));
-			try {Thread.sleep(1000);} catch (InterruptedException e) {}
-		}
-		
-		if (iCommandSender.getEntityWorld().loadedTileEntityList == null)
-		{
-			iCommandSender.addChatMessage(new ChatComponentTranslation("Deleted all TileEntity updates from world! Start debugging... please wait..."));
-		}
-		else
-		{
-			iCommandSender.addChatMessage(new ChatComponentTranslation("Loaded TileEnties: " + iCommandSender.getEntityWorld().loadedTileEntityList.size() + " ... some mod reactivate tileenties... stop command execution"));
-			return;
-		}
-		
-		
-		HashMap<String, Integer> unsortedTileEntiyTimes = new HashMap(this.tileEntitys.size());
-		TreeMap<String, Integer> sortedTileEntityTimes = new TreeMap(new IntegerComparator(unsortedTileEntiyTimes)); 
 
+		ArrayList<Object[]> aResult = new ArrayList();
 
-		long start = 0;
-		long end = 0;
-		for(int run = 0; run < cntRuns; run++)
-		{
-			for(TileEntity tileEntity : this.tileEntitys)
+		for(World world : DimensionManager.getWorlds())
+		{					
+			HashMap<TileEntity, Integer> resultHash = new HashMap(world.loadedTileEntityList.size());
+			long start = 0;
+			long end = 0;
+			for(int run = 0; run < cntRuns; run++)
 			{
-				if (tileEntity == null) continue;
-				start = System.nanoTime();
-				tileEntity.updateEntity();
-				end = System.nanoTime();
-				if (run == 0)
+				for(Object objTileEntity : world.loadedTileEntityList)
 				{
-					unsortedTileEntiyTimes.put(this.getTileEntityString(tileEntity), (int) (end-start));
+					if (objTileEntity == null) continue;
+					if (!(objTileEntity instanceof TileEntity)) continue;
+					TileEntity tileEntity = (TileEntity)objTileEntity;
+					
+					start = System.nanoTime();
+					tileEntity.updateEntity();
+					end = System.nanoTime();
+					
+					if (run == 0)
+					{
+						resultHash.put(tileEntity, (int) (end-start));
+					}
+					else
+					{
+						resultHash.get(tileEntity).compareTo((int)(end-start));
+					}
 				}
-				else
-				{
-					unsortedTileEntiyTimes.get(this.getTileEntityString(tileEntity)).compareTo((int)(end-start));
-				}
-			}
-		}
-		
-		
-		iCommandSender.addChatMessage(new ChatComponentTranslation("Processing result... please wait..."));
-		
-		sortedTileEntityTimes.putAll(unsortedTileEntiyTimes);
-	
-		/*int cnt0 = 0;
-		for(Map.Entry<String,Integer> entry : sortedTileEntityTimes.entrySet()) 
-		{
-			Integer value = entry.getValue();
-			if (value == 0)
-			{
-				cnt0++;
-				continue;
 			}
 			
-			String key = entry.getKey();
-			iCommandSender.addChatMessage(new ChatComponentTranslation(key + " = " + value + "ns"));
-		}
-		iCommandSender.addChatMessage(new ChatComponentTranslation("There are " + cnt0 + " TileEntitys with 0ns"));		
-		*/
+			
+			Iterator it = resultHash.entrySet().iterator();
+		    while (it.hasNext()) 
+		    {
+		    	Map.Entry<TileEntity, Integer> entry = (Map.Entry<TileEntity, Integer>)it.next();
+		    	
+		        TileEntity tileEntity = entry.getKey();		
+		        Object[] oResult = new Object[4];
+		        oResult[0] = world.provider.dimensionId;
+		        oResult[1] = tileEntity.getBlockType().getUnlocalizedName().substring(5);
+		        oResult[2] = tileEntity.xCoord + " " + tileEntity.zCoord + " " + tileEntity.yCoord;
+		        oResult[3] = entry.getValue();	
+		        aResult.add(oResult);
+		        it.remove();
+		    }	
+		    
+		}	
 		
-		Object[][] data = new Object[sortedTileEntityTimes.size()][2];		
+		Object[][] tData = new Object[aResult.size()][4];
 		int i = 0;
-		for(Map.Entry<String,Integer> entry : sortedTileEntityTimes.entrySet()) 
+		for(Object[] oResult : aResult)
 		{
-			data[i][0] = entry.getKey();
-			data[i][1] = entry.getValue();
+			tData[i][0] = oResult[0];
+			tData[i][1] = oResult[1];
+			tData[i][2] = oResult[2];
+			tData[i][3] = oResult[3];					
 			i++;
 		}
 		
-		new FrameDebug(new STable(data, new Object[]{"TileEntityPosition", "TimeConsumpion (Nanoseconds)"})
+		new FrameDebug(new STable(tData, new Object[]{"Dimension", "Name", "Coords (X,Z,Y)", "TimeConsumpion (Nanoseconds)"})
 		{
 			@Override
             public boolean isCellEditable(int row, int col)
@@ -143,16 +120,7 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
                 return false;
             }
 		});
-		
-		iCommandSender.getEntityWorld().loadedTileEntityList = this.tileEntitys;
-		for(Object objTileEntityOriginal : iCommandSender.getEntityWorld().loadedTileEntityList)
-		{
-			TileEntity tileEntityOriginal = (TileEntity) objTileEntityOriginal;
-			tileEntityOriginal.validate();
-		}
-		
-		
-		
+
 	}
 	
 	@Override
@@ -184,24 +152,4 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 	{
 		return false;
 	}
-	
-	private String getTileEntityString(TileEntity tileEntity)
-	{
-		return tileEntity.getClass().getName() + " at (X, Z, Y): " + tileEntity.xCoord + " " + tileEntity.zCoord + " " + tileEntity.yCoord;
-	}
-	
-	private class IntegerComparator implements Comparator<String> 
-	{
-	    Map<String, Integer> map;
-	    public IntegerComparator(Map<String, Integer> map) 
-	    {
-	        this.map = map;
-	    }
-    
-	    public int compare(String a, String b) 
-	    {
-	    	return map.get(a) <= map.get(b) ? -1 : 1;
-	    }
-	}
-	
 }
