@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import drummermc.debug.jgui._components.STable;
+import drummermc.debug.jgui.debug.FrameDebug;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.tileentity.TileEntity;
@@ -14,7 +16,7 @@ import net.minecraft.util.ChatComponentTranslation;
 
 public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 {
-	private static final String CMD = "te timecs";
+	private static final String CMD = "tetimecs";
 	private static final String S_ARGS = "<int:countRuns>";
 	
 	private ArrayList<TileEntity> tileEntitys;
@@ -107,10 +109,8 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 		iCommandSender.addChatMessage(new ChatComponentTranslation("Processing result... please wait..."));
 		
 		sortedTileEntityTimes.putAll(unsortedTileEntiyTimes);
-		
-		int cnt0 = 0;
-		
-		
+	
+		/*int cnt0 = 0;
 		for(Map.Entry<String,Integer> entry : sortedTileEntityTimes.entrySet()) 
 		{
 			Integer value = entry.getValue();
@@ -124,13 +124,35 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 			iCommandSender.addChatMessage(new ChatComponentTranslation(key + " = " + value + "ns"));
 		}
 		iCommandSender.addChatMessage(new ChatComponentTranslation("There are " + cnt0 + " TileEntitys with 0ns"));		
-				
+		*/
+		
+		Object[][] data = new Object[sortedTileEntityTimes.size()][2];		
+		int i = 0;
+		for(Map.Entry<String,Integer> entry : sortedTileEntityTimes.entrySet()) 
+		{
+			data[i][0] = entry.getKey();
+			data[i][1] = entry.getValue();
+			i++;
+		}
+		
+		new FrameDebug(new STable(data, new Object[]{"TileEntityPosition", "TimeConsumpion (Nanoseconds)"})
+		{
+			@Override
+            public boolean isCellEditable(int row, int col)
+            {
+                return false;
+            }
+		});
+		
 		iCommandSender.getEntityWorld().loadedTileEntityList = this.tileEntitys;
 		for(Object objTileEntityOriginal : iCommandSender.getEntityWorld().loadedTileEntityList)
 		{
 			TileEntity tileEntityOriginal = (TileEntity) objTileEntityOriginal;
 			tileEntityOriginal.validate();
 		}
+		
+		
+		
 	}
 	
 	@Override
