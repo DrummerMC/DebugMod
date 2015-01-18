@@ -23,8 +23,7 @@ import net.minecraftforge.common.MinecraftForge;
 
 public class CmdCheckVariableTileEntity implements ICommand {
 
-	private static final String CMD = "test";
-	private static final String S_ARGS = "<int:countRuns>";
+	private static final String CMD = "tevars";
 	
 	private ArrayList<TileEntity> tileEntitys;
 	
@@ -37,7 +36,7 @@ public class CmdCheckVariableTileEntity implements ICommand {
 	@Override
 	public String getCommandUsage(ICommandSender iCommandSender) 
 	{
-		return CMD + " " + S_ARGS;
+		return CMD;
 	}
 
 	@Override
