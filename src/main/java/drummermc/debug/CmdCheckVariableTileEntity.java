@@ -9,12 +9,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import drummermc.debug.network.InfoList;
+import drummermc.debug.network.PacketCounterTile;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.MinecraftForge;
 
 public class CmdCheckVariableTileEntity implements ICommand {
 
@@ -38,6 +43,11 @@ public class CmdCheckVariableTileEntity implements ICommand {
 	@Override
 	public void processCommand(ICommandSender iCommandSender, String[] args)
 	{
+		if(!(iCommandSender instanceof EntityPlayer)){
+			return;
+		}
+		EntityPlayer player = (EntityPlayer) iCommandSender;
+		List<InfoList> list = new ArrayList<InfoList>();
 		for(World world : DimensionManager.getWorlds()){
 			for(Object obj : world.loadedTileEntityList){
 				if(obj instanceof TileEntity){
@@ -50,7 +60,6 @@ public class CmdCheckVariableTileEntity implements ICommand {
 						field.setAccessible(true);
 						try{
 							Object o = field.get(tile);
-							System.out.println(field.getName());
 							if(o != null){
 								Class clazz2 = o.getClass();
 								try{
@@ -68,15 +77,19 @@ public class CmdCheckVariableTileEntity implements ICommand {
 						}
 						field.setAccessible(b1);
 					}
-					System.out.println("World: " + world.provider.dimensionId + " Tile X:" + tile.xCoord + " Tile Y:" + tile.yCoord + " Tile Z:" + tile.zCoord + " Class: " + tile.getClass().getName() + " Amount: " + counter);
+					list.add(new InfoList(tile.getClass().getName(), world.provider.dimensionId, counter));
 				}
 			}
 		}
+		InfoList[] l = new InfoList[list.size()];
+		for(int i = 0; i < list.size(); i++){
+			l[i] = list.get(i);
+		}
+		new PacketCounterTile(player, l).sendPacketToPlayer(player);;
 	}
 	
 	public int getAmountOfFields(Iterator itr){
 		int i = 0;
-		System.out.println();
 		try{
 			while(itr.hasNext()) {
 	         Object element = itr.next();
