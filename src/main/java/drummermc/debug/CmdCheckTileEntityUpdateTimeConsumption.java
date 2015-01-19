@@ -101,7 +101,7 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 		        TileEntity tileEntity = entry.getKey();		
 		        Object[] oResult = new Object[4];
 		        oResult[0] = world.provider.dimensionId;
-		        oResult[1] = tileEntity.getBlockType().getUnlocalizedName().substring(5);
+		        oResult[1] = tileEntity.getClass().getName();
 		        oResult[2] = tileEntity.xCoord + " " + tileEntity.zCoord + " " + tileEntity.yCoord;
 		        oResult[3] = entry.getValue();	
 		        aResult.add(oResult);
