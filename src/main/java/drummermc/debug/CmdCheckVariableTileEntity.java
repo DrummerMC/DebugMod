@@ -29,6 +29,8 @@ public class CmdCheckVariableTileEntity implements ICommand {
 	
 	private ArrayList<TileEntity> tileEntitys;
 	
+	private static List<InfoList> lis;
+	
 	@Override
 	public String getCommandName()
 	{
@@ -87,31 +89,60 @@ public class CmdCheckVariableTileEntity implements ICommand {
 			}
 		}
 		InfoList[] l = new InfoList[list.size()];
-		try{
-			File f = new File("tevars.txt");
-		if(f.exists())
-			f.delete();
-			f.createNewFile();
-			FileWriter w = new FileWriter(f);
-			InfoList biggest = null;
-			for(int i = 0; i < list.size(); i++){
-				InfoList li = list.get(i);
-				if(biggest == null)
-					biggest = li;
-				if(biggest.count < li.count)
-					biggest = li;
-				w.write("Class: " + li.tileEntityName + " Amount: " + li.count + " World id: " + li.count + "\n");
-			}
-			if(biggest != null)
-				w.write("\nMost Fields:\n" + "Class: " + biggest.tileEntityName + " Amount: " + biggest.count + " World id: " + biggest.worldID);
-			w.close();
-		}catch(Throwable e){
+		
+		lis = list;
+		
+		Thread t = new Thread(new Runnable(){
 			
-		}
+			List<InfoList> orginal = (List<InfoList>) ((ArrayList)lis).clone();
+			
+			@Override
+			public void run() {
+				try{
+					File f = new File("tevars.txt");
+					if(f.exists())
+						f.delete();
+						f.createNewFile();
+						FileWriter w = new FileWriter(f);
+						ArrayList<InfoList> output = new ArrayList<InfoList>();
+						for(int i = 0; i < orginal.size(); i++){
+							InfoList li = orginal.get(i);
+							System.out.println(output.size());
+							if(output.size() == 0)
+								output.add(li);
+							else{
+								for(int i2 = 0; i2 < output.size(); i2++){
+									if(output.get(i2).count > li.count){
+										output.add(i2, li);
+										li = null;
+										break;
+									}
+								}
+								if(li != null)
+									output.add(output.size(), li);
+							}
+							
+							
+							
+							
+						}
+						for(int i = 0; i < output.size(); i++){
+							InfoList li = output.get(i);
+							w.write("Class: " + li.tileEntityName + " Amount: " + li.count + " World id: " + li.worldID + "\n");
+						}
+						w.close();
+					}catch(Throwable e){
+						
+					}
+			}
+			
+		});
+		t.start();
+		
 		for(int i = 0; i < list.size(); i++){
 			l[i] = list.get(i);
 		}
-		new PacketCounterTile(player, l).sendPacketToPlayer(player);;
+		new PacketCounterTile(player, l).sendPacketToPlayer(player);
 	}
 	
 	public int getAmountOfFields(Iterator itr){
