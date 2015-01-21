@@ -66,13 +66,13 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 
 		for(World world : DimensionManager.getWorlds())
 		{					
-			List loadedTileEntites = world.loadedTileEntityList;
+			List loadedTileEntites = (List) ((ArrayList)world.loadedTileEntityList).clone();
 			HashMap<TileEntity, Integer> resultHash = new HashMap(loadedTileEntites.size());
 			long start = 0;
 			long end = 0;
 			for(int run = 0; run < cntRuns; run++)
 			{
-				for(Object objTileEntity : world.loadedTileEntityList)
+				for(Object objTileEntity : loadedTileEntites)
 				{
 					if (objTileEntity == null) continue;
 					if (!(objTileEntity instanceof TileEntity)) continue;
