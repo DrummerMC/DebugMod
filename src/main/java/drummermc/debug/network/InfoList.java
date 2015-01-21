@@ -4,9 +4,9 @@ import net.minecraft.nbt.NBTTagCompound;
 
 public class InfoList {
 
-	String tileEntityName;
-	int worldID;
-	int count;
+	public String tileEntityName;
+	public int worldID;
+	public int count;
 	
 	public InfoList(String _tileEntityName, int _worldID, int _count){
 		tileEntityName = _tileEntityName;

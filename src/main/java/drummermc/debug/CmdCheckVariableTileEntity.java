@@ -1,5 +1,7 @@
 package drummermc.debug;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -51,36 +53,61 @@ public class CmdCheckVariableTileEntity implements ICommand {
 			for(Object obj : world.loadedTileEntityList){
 				if(obj instanceof TileEntity){
 					int counter = 0;
-					TileEntity tile = (TileEntity) obj;
-					Class clazz = tile.getClass();
-					Field[] fields = clazz.getDeclaredFields();
-					for(Field field : fields){
-						boolean b1 = field.isAccessible();
-						field.setAccessible(true);
-						try{
-							Object o = field.get(tile);
-							if(o != null){
-								Class clazz2 = o.getClass();
-								try{
-									Method f = clazz2.getDeclaredMethod("iterator");
-									f.setAccessible(true);
-									Iterator itr = (Iterator) f.invoke(o);
-									counter = counter + getAmountOfFields(itr);
-								}catch(Throwable e){
-									
-									counter = counter + getAmount(o);
+					try{
+						TileEntity tile = (TileEntity) obj;
+						Class clazz = tile.getClass();
+						Field[] fields = clazz.getDeclaredFields();
+						for(Field field : fields){
+							boolean b1 = field.isAccessible();
+							field.setAccessible(true);
+							try{
+								Object o = field.get(tile);
+								if(o != null){
+									Class clazz2 = o.getClass();
+									try{
+										Method f = clazz2.getDeclaredMethod("iterator");
+										f.setAccessible(true);
+										Iterator itr = (Iterator) f.invoke(o);
+										counter = counter + getAmountOfFields(itr);
+									}catch(Throwable e){
+										
+										counter = counter + getAmount(o);
+									}
 								}
+							}catch(Throwable e){
+								
 							}
-						}catch(Throwable e){
-							
+							field.setAccessible(b1);
 						}
-						field.setAccessible(b1);
+						list.add(new InfoList(tile.getClass().getName(), world.provider.dimensionId, counter));
+					}catch(Throwable e){
+						
 					}
-					list.add(new InfoList(tile.getClass().getName(), world.provider.dimensionId, counter));
 				}
 			}
 		}
 		InfoList[] l = new InfoList[list.size()];
+		try{
+			File f = new File("tevars.txt");
+		if(f.exists())
+			f.delete();
+			f.createNewFile();
+			FileWriter w = new FileWriter(f);
+			InfoList biggest = null;
+			for(int i = 0; i < list.size(); i++){
+				InfoList li = list.get(i);
+				if(biggest == null)
+					biggest = li;
+				if(biggest.count < li.count)
+					biggest = li;
+				w.write("Class: " + li.tileEntityName + " Amount: " + li.count + " World id: " + li.count + "\n");
+			}
+			if(biggest != null)
+				w.write("\nMost Fields:\n" + "Class: " + biggest.tileEntityName + " Amount: " + biggest.count + " World id: " + biggest.worldID);
+			w.close();
+		}catch(Throwable e){
+			
+		}
 		for(int i = 0; i < list.size(); i++){
 			l[i] = list.get(i);
 		}
