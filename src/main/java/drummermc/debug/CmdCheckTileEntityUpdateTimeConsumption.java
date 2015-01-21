@@ -66,7 +66,8 @@ public class CmdCheckTileEntityUpdateTimeConsumption implements ICommand
 
 		for(World world : DimensionManager.getWorlds())
 		{					
-			HashMap<TileEntity, Integer> resultHash = new HashMap(world.loadedTileEntityList.size());
+			List loadedTileEntites = world.loadedTileEntityList;
+			HashMap<TileEntity, Integer> resultHash = new HashMap(loadedTileEntites.size());
 			long start = 0;
 			long end = 0;
 			for(int run = 0; run < cntRuns; run++)
