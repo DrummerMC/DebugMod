@@ -81,10 +81,40 @@ public class CmdCheckVariableTileEntity implements ICommand {
 							}
 							field.setAccessible(b1);
 						}
-						list.add(new InfoList(tile.getClass().getName(), world.provider.dimensionId, counter));
-					}catch(Throwable e){
+											}catch(Throwable e){
 						
 					}
+					try{
+						Class clazz = obj.getClass().getSuperclass();
+						while(clazz != TileEntity.class){
+							Field[] fields = clazz.getDeclaredFields();
+							for(Field field : fields){
+								boolean b1 = field.isAccessible();
+								field.setAccessible(true);
+								try{
+									Object o = field.get(obj);
+									if(o != null){
+										Class clazz2 = o.getClass();
+										try{
+											Method f = clazz2.getDeclaredMethod("iterator");
+											f.setAccessible(true);
+											Iterator itr = (Iterator) f.invoke(o);
+											counter = counter + getAmountOfFields(itr);
+										}catch(Throwable e){
+											
+											counter = counter + getAmount(o);
+										}
+									}
+								}catch(Throwable e){
+									
+								}
+								field.setAccessible(b1);
+							}
+							clazz = clazz.getSuperclass();
+						}
+					}catch(Throwable e){}
+					list.add(new InfoList(obj.getClass().getName(), world.provider.dimensionId, counter));
+					
 				}
 			}
 		}
@@ -107,7 +137,6 @@ public class CmdCheckVariableTileEntity implements ICommand {
 						ArrayList<InfoList> output = new ArrayList<InfoList>();
 						for(int i = 0; i < orginal.size(); i++){
 							InfoList li = orginal.get(i);
-							System.out.println(output.size());
 							if(output.size() == 0)
 								output.add(li);
 							else{
